@@ -28,6 +28,7 @@
 #include "kissfft/kiss_fftr.h"
 #endif
 
+#include <stdint.h>
 #include <sndfile.h>
 
 #include "die.h"
@@ -39,26 +40,28 @@
 
 #define TEMPORARY_SUFFIX ".convolute-temp"
 
-static void addconvolute(char *inputpath, char *irpath, char *addpath, char *outputpath, float amp, int extradelay) {
+static void addconvolute(char *inputpath, char *irpath, char *addpath, char *outputpath, float amp, int extradelay, uint32_t snd_in_len)
+{
     // open the input path for reading
-    SF_INFO snd_in_info;
-    SNDFILE *snd_in;
+    //SF_INFO snd_in_info;
+    //SNDFILE *snd_in;
 
-    memset(&snd_in_info, 0, sizeof(snd_in_info));
+    //memset(&snd_in_info, 0, sizeof(snd_in_info));
 
-    if ( (snd_in = sf_open(inputpath, SFM_READ, &snd_in_info)) == NULL )
-        die("Couldn't open a sound file for reading");
+    //if ( (snd_in = sf_open(inputpath, SFM_READ, &snd_in_info)) == NULL )
+        //die("Couldn't open a sound file for reading");
 
-    if ( snd_in_info.channels != 1 )
-        die("The input sound file has more than one channel");
+    //if ( snd_in_info.channels != 1 )
+    //    die("The input sound file has more than one channel");
 
-    int snd_in_len = snd_in_info.frames;
+    //uint32_t snd_in_len = snd_in_info.frames;
+    //uint32_t snd_in_len = 1000000;
 
     // extract the chunk of the ir we need
     soundfile *ir = readsoundfilechunk(irpath, extradelay, IMPULSE_CHUNK_MAXLEN);
 
-    if ( snd_in_info.samplerate != ir->samplerate )
-        die("Sample rates of input and impulse response are different.");
+    //if ( snd_in_info.samplerate != ir->samplerate )
+    //    die("Sample rates of input and impulse response are different.");
 
     int fftlen = ir->length * 1.5 + 10000;
     {
@@ -158,43 +161,43 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
 
 
     // set up the input add file
-    SNDFILE *s_add = NULL;
-    SF_INFO addinfo;
+    //SNDFILE *s_add = NULL;
+    //SF_INFO addinfo;
 
-    memset(&addinfo, 0, sizeof(addinfo));
+    //memset(&addinfo, 0, sizeof(addinfo));
 
-    if ( addpath ) {
-        if ( (s_add = sf_open(addpath, SFM_READ, &addinfo)) == NULL )
-            die("Couldn't open additive file for reading");
-    }
+    //if ( addpath ) {
+    //    if ( (s_add = sf_open(addpath, SFM_READ, &addinfo)) == NULL )
+    //        die("Couldn't open additive file for reading");
+    //}
 
     // set up the output file
-    SNDFILE *s_out;
-    SF_INFO outinfo;
+    //SNDFILE *s_out;
+    //SF_INFO outinfo;
 
-    memset(&outinfo, 0, sizeof(outinfo));
+    //memset(&outinfo, 0, sizeof(outinfo));
 
-    outinfo.samplerate = snd_in_info.samplerate;
-    outinfo.channels   = 1;
-    outinfo.format     = SF_FORMAT_WAV | SF_FORMAT_PCM_24 | SF_ENDIAN_FILE;
+    //outinfo.samplerate = snd_in_info.samplerate;
+    //outinfo.channels   = 1;
+    //outinfo.format     = SF_FORMAT_WAV | SF_FORMAT_PCM_24 | SF_ENDIAN_FILE;
 
-    if ( (s_out = sf_open(outputpath, SFM_WRITE, &outinfo)) == NULL )
-        die("Couldn't open output file for writing");
+    //if ( (s_out = sf_open(outputpath, SFM_WRITE, &outinfo)) == NULL )
+    //    die("Couldn't open output file for writing");
 
     // copy the first few bytes of the add to the output, if we're delayed
     if ( addpath ) {
-        int tocopy = extradelay;
-        while ( tocopy > 0 ) {
-            if ( tocopy > fftlen ) {
-                sf_read_float(s_add, outspace, fftlen);
-                sf_write_float(s_out, outspace, fftlen);
-                tocopy -= fftlen;
-            } else {
-                sf_read_float(s_add, outspace, tocopy);
-                sf_write_float(s_out, outspace, tocopy);
-                tocopy -= tocopy;
-            }
-        }
+        //int tocopy = extradelay;
+        //while ( tocopy > 0 ) {
+        //    if ( tocopy > fftlen ) {
+        //        sf_read_float(s_add, outspace, fftlen);
+        //        sf_write_float(s_out, outspace, fftlen);
+        //        tocopy -= fftlen;
+        //    } else {
+        //        sf_read_float(s_add, outspace, tocopy);
+        //        sf_write_float(s_out, outspace, tocopy);
+        //        tocopy -= tocopy;
+        //    }
+        //}
     } else {
         int tocopy = extradelay;
         for (int i = 0; i < fftlen; i++)
@@ -223,12 +226,12 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
 #endif
 
     // initialize the outspace
-    if ( addpath ) {
-        sf_read_float(s_add, outspace, fftlen);
-    } else {
-        for (int i = 0; i < fftlen; i++)
-            outspace[i] = 0;
-    }
+    //if ( addpath ) {
+    //    sf_read_float(s_add, outspace, fftlen);
+    //} else {
+    //    for (int i = 0; i < fftlen; i++)
+    //        outspace[i] = 0;
+    //}
 
     // initialize the inspace
     for (int i = 0; i < fftlen; i++)
@@ -319,8 +322,8 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
         // finally, initialize the newly opened up space with more data from the add file
         // append with zeroes if we're already past the end of the add file
         int got = 0;
-        if ( addpath )
-            got = sf_read_float(s_add, &outspace[fftlen-stepsize], stepsize);
+        //if ( addpath )
+        //    got = sf_read_float(s_add, &outspace[fftlen-stepsize], stepsize);
         for (int i = fftlen-stepsize+got; i<fftlen; i++)
             outspace[i] = 0;
     }
@@ -354,7 +357,7 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
 #endif
 
     // clean up
-    sf_close(s_out);
+    //sf_close(s_out);
 
 #ifdef USE_FFTW3
     fftwf_destroy_plan(p_fw);
@@ -373,9 +376,9 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
     free(ir->data);
     free(ir);
 
-    sf_close(snd_in);
-    if ( addpath )
-        sf_close(s_add);
+    //sf_close(snd_in);
+    //if ( addpath )
+    //    sf_close(s_add);
 
     free(outspace);
     free(inspace);
@@ -388,7 +391,7 @@ void killfile(char *path) {
     }
 }
 
-void convolute(char *inputpath, char *irpath, char *outputpath, float amp) {
+void convolute(char *inputpath, char *irpath, char *outputpath, float amp, uint32_t snd_in_len) {
     char *newpath;
 
     if ( (newpath = malloc(strlen(outputpath)+strlen(TEMPORARY_SUFFIX))) == NULL )
@@ -407,7 +410,7 @@ void convolute(char *inputpath, char *irpath, char *outputpath, float amp) {
 #ifdef SPEW
         fprintf(stderr, "swapping ir and in\n");
 #endif
-        return convolute(irpath, inputpath, outputpath, amp);
+        return convolute(irpath, inputpath, outputpath, amp, snd_in_len);
     }
 
     int passes = (int) ceil( (double)irlen / IMPULSE_CHUNK_MAXLEN );
@@ -418,7 +421,7 @@ void convolute(char *inputpath, char *irpath, char *outputpath, float amp) {
         if ( passes > 1 )
             fprintf(stderr, "pass %d/%d\033[K\n", i+1, passes);
 
-        addconvolute(inputpath, irpath, i == 0 ? NULL : outputpath, newpath, amp, irat);
+        addconvolute(inputpath, irpath, i == 0 ? NULL : outputpath, newpath, amp, irat, snd_in_len);
         irat += IMPULSE_CHUNK_MAXLEN;
         rename(newpath, outputpath);
 
