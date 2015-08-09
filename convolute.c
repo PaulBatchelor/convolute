@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2009-2010 Jack Christopher Kastorff <encryptio@gmail.com>
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -201,10 +201,12 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
             outspace[i] = 0;
         while ( tocopy > 0 ) {
             if ( tocopy > fftlen ) {
-                sf_write_float(s_out, outspace, fftlen);
+                //sf_write_float(s_out, outspace, fftlen);
+                fwrite(outspace, sizeof(float), fftlen, stdout);
                 tocopy -= fftlen;
             } else {
-                sf_write_float(s_out, outspace, tocopy);
+                //sf_write_float(s_out, outspace, tocopy);
+                fwrite(outspace, sizeof(float), tocopy, stdout);
                 tocopy -= tocopy;
             }
         }
@@ -243,7 +245,8 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
         int readlength = stepsize;
         if ( start + readlength > snd_in_len )
             readlength = snd_in_len - start;
-        sf_read_float(snd_in, inspace, readlength);
+        //sf_read_float(snd_in, inspace, readlength);
+        fread(inspace, sizeof(float), readlength, stdin);
 
         // clean up the trailing part of inspace if it's the last step
         if ( start+fftlen > snd_in_len )
@@ -299,12 +302,14 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
 
         // write out the part we're done with
         if ( st < steps-1 ) {
-            sf_write_float(s_out, outspace, stepsize);
+            //sf_write_float(s_out, outspace, stepsize);
+            fwrite(outspace, sizeof(float), stepsize, stdout);
         } else {
             // write out the last step - it's smaller than the rest
-            sf_write_float(s_out, outspace, snd_in_len - stepsize*(steps-1) + ir->length);
+            //sf_write_float(s_out, outspace, snd_in_len - stepsize*(steps-1) + ir->length);
+            fwrite(outspace, sizeof(float), snd_in_len - stepsize * (steps-1) + ir->length, stdout);
         }
-        
+
         // and slide the outspace over
         // TODO: memmove
         for (int i = 0; i < fftlen-stepsize; i++) {
