@@ -35,9 +35,9 @@ static uint32_t str2time(int sr, char *str)
 }
 
 int main(int argc, char **argv) {
-    if ( argc != 7 )
-        die("Bad number of arguments. Usage: convolute input impulse output amp sr time");
+    if ( argc != 5 )
+        die("Bad number of arguments. Usage: convolute impulse amp sr time");
 
-    convolute(argv[1], argv[2], argv[3], atof(argv[4]), str2time(atoi(argv[5]), argv[6]));
+    convolute(argv[1], atof(argv[2]), str2time(atoi(argv[3]), argv[4]));
 }
 

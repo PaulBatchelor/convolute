@@ -40,7 +40,8 @@
 
 #define TEMPORARY_SUFFIX ".convolute-temp"
 
-static void addconvolute(char *inputpath, char *irpath, char *addpath, char *outputpath, float amp, int extradelay, uint32_t snd_in_len)
+//static void addconvolute(char *inputpath, char *irpath, char *addpath, char *outputpath, float amp, int extradelay, uint32_t snd_in_len)
+static void addconvolute(char *irpath, float amp, int extradelay, uint32_t snd_in_len)
 {
     // open the input path for reading
     //SF_INFO snd_in_info;
@@ -185,7 +186,6 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
     //    die("Couldn't open output file for writing");
 
     // copy the first few bytes of the add to the output, if we're delayed
-    if ( addpath ) {
         //int tocopy = extradelay;
         //while ( tocopy > 0 ) {
         //    if ( tocopy > fftlen ) {
@@ -198,20 +198,18 @@ static void addconvolute(char *inputpath, char *irpath, char *addpath, char *out
         //        tocopy -= tocopy;
         //    }
         //}
-    } else {
-        int tocopy = extradelay;
-        for (int i = 0; i < fftlen; i++)
-            outspace[i] = 0;
-        while ( tocopy > 0 ) {
-            if ( tocopy > fftlen ) {
-                //sf_write_float(s_out, outspace, fftlen);
-                fwrite(outspace, sizeof(float), fftlen, stdout);
-                tocopy -= fftlen;
-            } else {
-                //sf_write_float(s_out, outspace, tocopy);
-                fwrite(outspace, sizeof(float), tocopy, stdout);
-                tocopy -= tocopy;
-            }
+    int tocopy = extradelay;
+    for (int i = 0; i < fftlen; i++)
+        outspace[i] = 0;
+    while ( tocopy > 0 ) {
+        if ( tocopy > fftlen ) {
+            //sf_write_float(s_out, outspace, fftlen);
+            fwrite(outspace, sizeof(float), fftlen, stdout);
+            tocopy -= fftlen;
+        } else {
+            //sf_write_float(s_out, outspace, tocopy);
+            fwrite(outspace, sizeof(float), tocopy, stdout);
+            tocopy -= tocopy;
         }
     }
 
@@ -391,27 +389,17 @@ void killfile(char *path) {
     }
 }
 
-void convolute(char *inputpath, char *irpath, char *outputpath, float amp, uint32_t snd_in_len) {
-    char *newpath;
-
-    if ( (newpath = malloc(strlen(outputpath)+strlen(TEMPORARY_SUFFIX))) == NULL )
-        die("Couldn't malloc space for newpath");
-
-    strcpy(newpath, outputpath);
-    strcpy(&newpath[strlen(outputpath)], TEMPORARY_SUFFIX);
-
-    killfile(outputpath);
-    killfile(newpath);
+void convolute(char *irpath, float amp, uint32_t snd_in_len)
+{
 
     int irlen = getsoundfilelength(irpath);
-    int inlen = getsoundfilelength(inputpath);
 
-    if ( irlen > inlen ) {
-#ifdef SPEW
-        fprintf(stderr, "swapping ir and in\n");
-#endif
-        return convolute(irpath, inputpath, outputpath, amp, snd_in_len);
-    }
+//    if ( irlen > inlen ) {
+//#ifdef SPEW
+//        fprintf(stderr, "swapping ir and in\n");
+//#endif
+//        return convolute(irpath, inputpath, outputpath, amp, snd_in_len);
+//    }
 
     int passes = (int) ceil( (double)irlen / IMPULSE_CHUNK_MAXLEN );
 
@@ -421,13 +409,12 @@ void convolute(char *inputpath, char *irpath, char *outputpath, float amp, uint3
         if ( passes > 1 )
             fprintf(stderr, "pass %d/%d\033[K\n", i+1, passes);
 
-        addconvolute(inputpath, irpath, i == 0 ? NULL : outputpath, newpath, amp, irat, snd_in_len);
+        addconvolute(irpath, amp, irat, snd_in_len);
         irat += IMPULSE_CHUNK_MAXLEN;
-        rename(newpath, outputpath);
+        //rename(newpath, outputpath);
 
         i++;
     }
 
-    free(newpath);
 }
 
